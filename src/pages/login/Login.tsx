@@ -1,5 +1,5 @@
-import React, { useState, FC } from 'react'
-import './Login.less';
+import React, { useState, FC, useEffect } from 'react'
+import './Login.less'
 import {
   Form,
   Input,
@@ -10,16 +10,33 @@ import {
 } from 'antd';
 import { GetSms, login, register } from '../../api/login'
 import { extractCode } from '../../utils/validate'
+import { setToken, setUserName } from '../../utils/app'
 import sha1 from 'js-sha1'
-import { setToken, setUserName } from '../../utils/app';
-const Login: FC = () => {
+import classnames from 'classnames'
+
+interface requestDataProps {
+  username: string,
+  password: string,
+  code: string
+}
+
+
+const Login: FC = (props) => {
   // 按钮列表
   const menuList = [
     { id: 0, value: '登陆' },
     { id: 1, value: '注册' },
   ]
-  const [componentSize, setComponentSize] = useState('default')
-
+  const [componentSize] = useState('default')
+  // 是否禁用按钮
+  const [buttonStatus, setButtonStatus] = useState(true)
+  // 验证码按钮状态
+  const [codeButtonStatus, setCodeButtonStatus] = useState({
+    status: false,
+    value: '获取验证码'
+  })
+  // 验证码按钮定时器
+  let [codeTimer] = useState<NodeJS.Timer | null>(null)
   // 按钮状态
   const [menuStatus, setMenuStatus] = useState(0)
   // 判断登录注册按钮
@@ -36,15 +53,13 @@ const Login: FC = () => {
       setIsLogin('注册')
     }
     setMenuStatus(index)
+    clearCountDown()
   }
-  const onFinish = (values: any) => {
-    console.log('Received values of form: ', values);
-  };
+
   /**
    * 获取短信
    */
   const getSms = () => {
-
     let username = form.getFieldValue(['user', 'name'])
     if (!username) {
       message.error('请输入邮箱')
@@ -54,8 +69,13 @@ const Login: FC = () => {
       username,
       module: menuStatus === 0 ? 'login' : 'register'
     }
+    // 当点击获取验证码的时候，把按钮disable掉，把文字变成获取中
+    setCodeButtonStatus({ status: true, value: '获取验证码中' })
     GetSms(requertData).then((res: any) => {
-      console.log(res)
+      // 回复按钮状态
+      setButtonStatus(false)
+      // 开启验证码按钮倒数计时器
+      countDown(60)
       if (res.data.resCode === 0) {
         // 获取验证码成功
         message.success(res.data.message)
@@ -64,27 +84,31 @@ const Login: FC = () => {
         // 设置验证码
         form.setFieldsValue({ user: { code: code } });
       }
+    }).catch(err => {
+      // 如果失败了，提示失败信息
+      message.error('获取验证码失败')
+      // 恢复按钮
+      setCodeButtonStatus({ status: false, value: '重新获取' })
     })
   }
 
-  // 提交表单
+  /**
+   * 提交表单
+   */
   const submitForm = () => {
-
     const user = form.getFieldsValue(['user']).user
     if (!user) {
       message.error('请填好表单')
       return
     }
-
     let requertData = {
       username: user.name,
       password: sha1(user.password),
       code: user.code
     }
     if (menuStatus === 0) {
-      // 登陆
+      // 触发登陆
       login(requertData).then(res => {
-        console.log(res)
         let result = res.data;
         if (result.resCode === 0) {
           // 提示登陆成功
@@ -93,6 +117,7 @@ const Login: FC = () => {
           setToken(result.data.token)
           // 设置username
           setUserName(result.data.username)
+          form.resetFields()
         }
       }).catch(err => {
         message.error('登陆失败，网络错误')
@@ -100,6 +125,14 @@ const Login: FC = () => {
     } else if (menuStatus === 1) {
       // 注册
       register(requertData).then(res => {
+        let result = res.data;
+        if (result.resCode === 0) {
+          message.success('注册成功')
+          // 重置表单
+          form.resetFields()
+          // 切换到登录
+          setMenuStatus(0)
+        }
         console.log(res)
       }).catch(err => {
         message.error('注册失败，网络错误')
@@ -108,6 +141,45 @@ const Login: FC = () => {
 
 
   }
+  /**
+   * 倒数定时器
+   */
+  const countDown = (time: number) => {
+    if (codeTimer) {
+      clearInterval(codeTimer)
+    }
+    let timer = time
+    codeTimer = setInterval(() => {
+      timer--;
+      if (timer === 0) {
+        clearInterval(Number(codeTimer))
+
+        setCodeButtonStatus({ status: false, value: `重新获取` })
+      } else {
+        setCodeButtonStatus({ status: true, value: `倒计时${timer}秒` })
+      }
+    }, 1000)
+  }
+  /** 
+   *  清除定时器
+   */
+  const clearCountDown = () => {
+    setCodeButtonStatus({ status: false, value: `获取验证码` })
+    clearInterval(Number(codeTimer))
+  };
+
+  useEffect(() => {
+
+    return () => {
+      //页面卸载的时候，清除定时器
+      clearCountDown()
+    }
+  }, [])
+
+  const classes = classnames('default-button', {
+    'disable-button': buttonStatus
+  })
+
   return (
     <div className="login">
       <div className="login-wrap">
@@ -124,7 +196,6 @@ const Login: FC = () => {
           form={form}
           layout="vertical"
           initialValues={{ size: componentSize }}
-          onFinish={onFinish}
           labelCol={{ span: 5 }}
           labelAlign="left"
         >
@@ -178,17 +249,16 @@ const Login: FC = () => {
               </Col>
               <Col offset={2}></Col>
 
-              <Col span={6} className="button-wrapp"><Button type="primary" onClick={getSms}>获取验证码</Button></Col>
+              <Col span={6} className="button-wrapp"><Button type="primary" onClick={getSms} disabled={codeButtonStatus.status ? true : false}>{codeButtonStatus.value}</Button></Col>
             </Row>
           </Form.Item>
           <Form.Item>
-            <Button className="default-button" htmlType="submit" onClick={submitForm}>{isLogin}</Button>
+            <Button className={classes} htmlType="submit" onClick={submitForm} disabled={buttonStatus ? true : false}>{isLogin}</Button>
           </Form.Item>
         </Form>
       </div>
     </div>
   )
 }
-
 export default Login
 
