@@ -11,7 +11,7 @@ export function setToken(token) {
 }
 
 export function removeToken() {
-  return cookie.remove(adminToKen)
+  return cookie.expire(adminToKen)
 }
 
 export function setUserName(value) {
@@ -22,6 +22,6 @@ export function getUserName() {
   return cookie.get(usernameKey)
 }
 export function removeUserName(){
-  return cookie.remove(usernameKey)
+  return cookie.expire(usernameKey)
 }
 

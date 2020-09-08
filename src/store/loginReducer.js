@@ -1,5 +1,6 @@
-import { setToken, setUserName, getToken, getUserName } from '../utils/app';
-import { LOGIN } from './actionTypes';
+import {  getToken, getUserName, removeToken, removeUserName } from '../utils/app';
+import { LOGOUT } from './actionTypes';
+import {message} from 'antd'
 let login = {
   username: getUserName() || '',
   token: getToken() || ''
@@ -7,17 +8,16 @@ let login = {
 
 export default (state = login, action) => {
   switch (action.type) {
-    case LOGIN:
-      // 设置token
-      setToken(action.value.token)
-      // 设置username
-      setUserName(action.value.username)
-      return Object.assign(state, {
-        username: getUserName(),
-        token: getToken()
-      })
+    case LOGOUT:
+      removeToken()
+      removeUserName()
+      let newState = JSON.parse(JSON.stringify(state))
+      newState.username = '';
+      newState.token = '';
+      message.success('退出成功')
+      
+      return newState
     default:
       return state
   }
-  return state
 }

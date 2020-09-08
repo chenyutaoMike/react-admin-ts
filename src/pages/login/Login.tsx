@@ -10,7 +10,8 @@ import {
 } from 'antd';
 import { GetSms, login, register } from '../../api/login'
 import { extractCode } from '../../utils/validate'
-import { setToken, setUserName } from '../../utils/app'
+import { setToken, setUserName, getToken, getUserName } from '../../utils/app'
+import { RouteComponentProps, Redirect } from 'react-router-dom'
 import sha1 from 'js-sha1'
 import classnames from 'classnames'
 
@@ -21,7 +22,7 @@ interface requestDataProps {
 }
 
 
-const Login: FC = (props) => {
+const Login: FC<RouteComponentProps> = (props) => {
   // 按钮列表
   const menuList = [
     { id: 0, value: '登陆' },
@@ -117,7 +118,10 @@ const Login: FC = (props) => {
           setToken(result.data.token)
           // 设置username
           setUserName(result.data.username)
+          // 清空表单
           form.resetFields()
+          // 跳转页面
+          props.history.replace("/")
         }
       }).catch(err => {
         message.error('登陆失败，网络错误')
@@ -169,7 +173,7 @@ const Login: FC = (props) => {
   };
 
   useEffect(() => {
-
+    console.log(props)
     return () => {
       //页面卸载的时候，清除定时器
       clearCountDown()
@@ -179,86 +183,92 @@ const Login: FC = (props) => {
   const classes = classnames('default-button', {
     'disable-button': buttonStatus
   })
-
-  return (
-    <div className="login">
-      <div className="login-wrap">
-        <ul className="menu-tab">
-          {
-            menuList.map((item, index) => {
-              return (
-                <li key={item.id} onClick={() => changeMenuItem(index)} className={index === menuStatus ? 'menu-item current' : 'menu-item'}>{item.value}</li>
-              )
-            })
-          }
-        </ul>
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{ size: componentSize }}
-          labelCol={{ span: 5 }}
-          labelAlign="left"
-        >
-
-          <Form.Item
-            name={['user', 'name']}
-            rules={[{ required: true, message: '请输入邮箱' }, { pattern: /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/, message: '请输入正确格式的邮箱' }]}
-            label="邮箱"
+  if (getToken() && getUserName()) {
+    return (
+      <Redirect to="/" />
+    )
+  } else {
+    return (
+      <div className="login">
+        <div className="login-wrap">
+          <ul className="menu-tab">
+            {
+              menuList.map((item, index) => {
+                return (
+                  <li key={item.id} onClick={() => changeMenuItem(index)} className={index === menuStatus ? 'menu-item current' : 'menu-item'}>{item.value}</li>
+                )
+              })
+            }
+          </ul>
+          <Form
+            form={form}
+            layout="vertical"
+            initialValues={{ size: componentSize }}
+            labelCol={{ span: 5 }}
+            labelAlign="left"
           >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name={['user', 'password']}
-            label="密码"
-            rules={[{ required: true, message: '请输入密码' }, { pattern: /^(?!\D+$)(?![^a-zA-Z]+$)\S{6,20}$/, message: '请输入正确格式的密码' }]}>
-            <Input id="password" type="password" />
-          </Form.Item>
-          {
-            menuStatus && menuStatus === 1 ?
-              <Form.Item
-                name={['user', 'passwords']}
-                label="重复密码"
-                rules={
-                  [
-                    { required: true, message: '请再次输入密码', },
-                    { pattern: /^(?!\D+$)(?![^a-zA-Z]+$)\S{6,20}$/, message: '请输入正确格式的密码' },
-                    ({ getFieldValue }) => ({
-                      validator(rule, value) {
-                        if (!value || getFieldValue(['user', 'password']) === value) {
-                          console.log('通过')
-                          return Promise.resolve();
-                        }
-                        return Promise.reject('两次密码不一致');
-                      },
-                    }),
-                  ]}>
-                <Input id="passwords" />
-              </Form.Item> : null
-          }
-          <Form.Item
-            label="验证码"
-          >
-            <Row>
-              <Col span={14}  >
+
+            <Form.Item
+              name={['user', 'name']}
+              rules={[{ required: true, message: '请输入邮箱' }, { pattern: /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/, message: '请输入正确格式的邮箱' }]}
+              label="邮箱"
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name={['user', 'password']}
+              label="密码"
+              rules={[{ required: true, message: '请输入密码' }, { pattern: /^(?!\D+$)(?![^a-zA-Z]+$)\S{6,20}$/, message: '请输入正确格式的密码' }]}>
+              <Input id="password" type="password" />
+            </Form.Item>
+            {
+              menuStatus && menuStatus === 1 ?
                 <Form.Item
-                  name={['user', 'code']}
-                  rules={[{ required: true, message: '请输入验证码' }, { pattern: /^[a-z0-9A-Z]{6}$/, message: '请输入正确格式的验证码' }]}
-                >
-                  <Input id="usercode" />
-                </Form.Item>
-              </Col>
-              <Col offset={2}></Col>
+                  name={['user', 'passwords']}
+                  label="重复密码"
+                  rules={
+                    [
+                      { required: true, message: '请再次输入密码', },
+                      { pattern: /^(?!\D+$)(?![^a-zA-Z]+$)\S{6,20}$/, message: '请输入正确格式的密码' },
+                      ({ getFieldValue }) => ({
+                        validator(rule, value) {
+                          if (!value || getFieldValue(['user', 'password']) === value) {
+                            console.log('通过')
+                            return Promise.resolve();
+                          }
+                          return Promise.reject('两次密码不一致');
+                        },
+                      }),
+                    ]}>
+                  <Input id="passwords" />
+                </Form.Item> : null
+            }
+            <Form.Item
+              label="验证码"
+            >
+              <Row>
+                <Col span={14}  >
+                  <Form.Item
+                    name={['user', 'code']}
+                    rules={[{ required: true, message: '请输入验证码' }, { pattern: /^[a-z0-9A-Z]{6}$/, message: '请输入正确格式的验证码' }]}
+                  >
+                    <Input id="usercode" />
+                  </Form.Item>
+                </Col>
+                <Col offset={2}></Col>
 
-              <Col span={6} className="button-wrapp"><Button type="primary" onClick={getSms} disabled={codeButtonStatus.status ? true : false}>{codeButtonStatus.value}</Button></Col>
-            </Row>
-          </Form.Item>
-          <Form.Item>
-            <Button className={classes} htmlType="submit" onClick={submitForm} disabled={buttonStatus ? true : false}>{isLogin}</Button>
-          </Form.Item>
-        </Form>
+                <Col span={6} className="button-wrapp"><Button type="primary" onClick={getSms} disabled={codeButtonStatus.status ? true : false}>{codeButtonStatus.value}</Button></Col>
+              </Row>
+            </Form.Item>
+            <Form.Item>
+              <Button className={classes} htmlType="submit" onClick={submitForm} disabled={buttonStatus ? true : false}>{isLogin}</Button>
+            </Form.Item>
+          </Form>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
+
 }
 export default Login
 
