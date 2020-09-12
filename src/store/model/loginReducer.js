@@ -1,5 +1,5 @@
-import {  getToken, getUserName, removeToken, removeUserName } from '../utils/app';
-import { LOGOUT } from './actionTypes';
+import {  getToken, getUserName, removeToken, removeUserName } from '../../utils/app';
+import { LOGOUT } from '../actionTypes';
 import {message} from 'antd'
 let login = {
   username: getUserName() || '',

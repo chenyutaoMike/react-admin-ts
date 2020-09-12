@@ -4,17 +4,18 @@ import './App.less';
 import Login from './pages/login/Login';
 import Admin from './pages/admin/Admin.jsx';
 import store from './store'
-import { Provider } from 'react-redux'
+import { StoreContext } from "redux-react-hook";
+// import { Provider } from 'react-redux'
 function App() {
   return (
-    <Provider store={store}>
+    <StoreContext.Provider value={store}>
       <HashRouter>
         <Switch>
-          <Route component={Login} path="/login"  exact/>
-          <Route component={Admin} path="/"  />
+          <Route component={Login} path="/login" exact />
+          <Route component={Admin} path="/" />
         </Switch>
       </HashRouter>
-    </Provider>
+    </StoreContext.Provider>
   );
 }
 

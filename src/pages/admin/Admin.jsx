@@ -12,7 +12,7 @@ import User from '../user/User.tsx'
 import logo from '../../assets/images/logo.png'
 import headerImg from '../../assets/images/header_icon.jpg'
 import classnames from 'classnames'
-
+import { getPath, setPath, getMenu, setMenu } from '../../utils/BrowserPath'
 const { Header, Sider, Content } = Layout;
 const { SubMenu } = Menu;
 
@@ -28,6 +28,10 @@ const Admin = (props) => {
   const [collapsed, setCollapsed] = useState(false)
   // 退出模态框
   const [visible, setVisible] = useState(false);
+  // 默认路径
+  const [urlPath, setUrlPath] = useState(JSON.parse(JSON.stringify(getPath())) || '/consoleIndex')
+  const [urlMenu, setUrlMenu] = useState(JSON.parse(JSON.stringify(getMenu())) || '/consoleIndex')
+
   let history = useHistory();
   const toggle = () => {
     setCollapsed(!collapsed)
@@ -74,11 +78,21 @@ const Admin = (props) => {
   const logout = () => {
     setVisible(true)
   }
+  const setKeyPath = ({ item, key, keyPath, domEvent }) => {
+    // console.log('item', item)
+    // console.log('key', key)
+    // console.log('keyPath', keyPath)
+    // console.log('domEvent', domEvent)
 
+    setUrlPath(key)
+    setPath(key)
+
+    setMenu(keyPath[1])
+    setUrlMenu(keyPath[1])
+  }
   let classes = classnames('logo-box', {
     'small': collapsed
   })
-
   if (!getToken() || !getUserName()) {
     return (
       <Redirect to="/login" />
@@ -88,9 +102,9 @@ const Admin = (props) => {
       <Layout>
         <Sider trigger={null} collapsible collapsed={collapsed}>
           <div className={classes}>
-            <img className="logo" src={logo} alt="logo"/>
+            <img className="logo" src={logo} alt="logo" />
           </div>
-          <Menu theme="dark" mode="inline" defaultSelectedKeys={['/consoleIndex']}>
+          <Menu theme="dark" mode="inline" defaultOpenKeys={[urlMenu]} defaultSelectedKeys={[urlPath]} onClick={setKeyPath}>
 
             {
               MenuList(routers)
@@ -123,15 +137,20 @@ const Admin = (props) => {
               margin: '24px 16px',
               padding: 24,
               minHeight: 280,
-              overflow:'auto'
+              overflow: 'auto'
             }}
           >
             <Switch>
-              <Redirect from="/" to="/consoleIndex" exact />
+              {
+                urlPath && urlPath !== '' ? <Redirect from="/" to={urlPath || 'consoleIndex'} exact /> : null
+              }
+
+
               <Route component={Console} path="/consoleIndex" />
               <Route component={InfoIndex} path="/infoIndex" />
               <Route component={Category} path="/category" />
               <Route component={User} path="/userIndex" />
+
 
             </Switch>
           </Content>

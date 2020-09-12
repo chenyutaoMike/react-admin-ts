@@ -1,6 +1,11 @@
 .category-box{
   width: 100%;
   background-color: #fff;
+  .category-header{
+    height: 60px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 20px;
+  }
 .category-wrap {
   div:first-child {
     &::before {
@@ -36,12 +41,16 @@
     padding-left: 44px;
     position: relative;
   }
-  svg {
+  ul{
+    margin:0;
+  }
+  .icon-svg {
     position: absolute;
     left: 14px;
     top: 14px;
     background-color: #fff;
     font-size: 17px;
+    z-index: 9;
   }
   li {
     position: relative;
@@ -59,12 +68,29 @@
   li,
   h4 {
     transition: all 3s ease 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    .button-group{
+      display: none;
+    }
     &:hover {
       background-color: #f3f3f3 !important;
       .button-group {
         display: block;
       }
     }
+    .ant-btn{
+      margin-left: 10px;
+    }
   }
 }
+}
+
+.category-form{
+  margin: 20px 20px 0 20px;
+  .category-button{
+    margin-left: 110px;
+  }
 }
