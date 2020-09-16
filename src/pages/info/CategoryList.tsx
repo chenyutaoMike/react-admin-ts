@@ -2,8 +2,9 @@ import React, { FC, useState, useEffect } from 'react'
 import InfoHeader from '../../components/infoHeader/InfoHeader'
 import { GetCategory, GetList, DeleteInfo } from '../../api/info'
 import { Row, Col, Table, Button, Space, Pagination, Popconfirm, message, Modal } from 'antd';
-import { QuestionCircleOutlined } from '@ant-design/icons';
-import { ColumnsType } from 'antd/es/table';
+import { QuestionCircleOutlined } from '@ant-design/icons'
+import { ColumnsType } from 'antd/es/table'
+import EditInfo from './dialog/EditInfo'
 
 export interface categoryItem {
   id: string;
@@ -32,12 +33,12 @@ export interface categoryItem {
 //   ]
 // }
 
-interface tableProps {
-  id: string;
-  title: string;
-  categoryId: string;
-  createDate: string;
-  content: string;
+export interface tableProps {
+  id?: string;
+  title?: string;
+  categoryId?: string;
+  createDate?: string;
+  content?: string;
   imgUrl?: null | []
   categoryName?: null | string
   status?: null | []
@@ -84,7 +85,7 @@ const CategoryList: FC = (props) => {
       render: (id: any, record: any, index: any) => {
         return (
           <Space>
-            <Button type="primary" key={index} size="small" style={{ fontSize: 13 }}>编辑</Button>
+            <Button type="primary" key={index} size="small" style={{ fontSize: 13 }} onClick={() => { editInfo(record) }}>编辑</Button>
             <Button type="primary" key={index} size="small" style={{ fontSize: 13 }}>编辑详情</Button>
             <Popconfirm title="确定删除此数据吗" icon={<QuestionCircleOutlined style={{ color: 'red' }} />} onConfirm={() => deleteInfo(id)}>
               <Button type="primary" danger key={index} size="small" style={{ fontSize: 13 }} >删除</Button>
@@ -106,13 +107,17 @@ const CategoryList: FC = (props) => {
   const [total, setTotal] = useState(0)
   // 当前页数
   const [currentPage, setCurrentPage] = useState(1)
-  console.log(currentPage)
+
   // 加载状态
   const [loadingStatus, setLoadingStatus] = useState(false)
   // 要删除的列表的数组
   const [deleteInfoArray, setDeleteInfoArray] = useState<[]>([])
   // 删除全部提示框
   const [visible, setVisible] = useState(false)
+  // 编辑框是否显示
+  const [editVisible, setEditVisible] = useState(false)
+  // 要编辑的数据
+  const [editData, setEditData] = useState({})
   // 表格数据
   const [tableData, setTableData] = useState([])
   const [infoHeaderData, setInfoHeaderData] = useState({
@@ -136,7 +141,7 @@ const CategoryList: FC = (props) => {
   const rowSelection = {
     onChange: (selectedRowKeys: any, selectedRows: any) => {
       setDeleteInfoArray(selectedRowKeys)
-      console.log(selectedRowKeys)
+
       // console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
     },
     getCheckboxProps: (record: any) => ({
@@ -162,7 +167,7 @@ const CategoryList: FC = (props) => {
       // 请求成功，取消loading状态
       setLoadingStatus(false)
       let result = res.data;
-      console.log(res)
+
       if (result.resCode === 0) {
         // 设置表格数据
         setTableData(result.data.data)
@@ -187,7 +192,7 @@ const CategoryList: FC = (props) => {
   }, [pageConfig]);
   // 删除表格信息
   const deleteInfo = (id: string | []) => {
-    console.log(id)
+
     let requestData = {}
     if (typeof id === 'string') {
       requestData = {
@@ -233,6 +238,19 @@ const CategoryList: FC = (props) => {
     // 点击了取消
     // 关闭对话框
     setVisible(false)
+  }
+  // 点击了编辑按钮
+  const editInfo = (data: tableProps) => {
+    setEditData(data)
+    console.log(data)
+    // 打开弹窗
+    setEditVisible(true)
+  }
+  const handleEditInfoOK = (editValue:any) => {
+    console.log(editValue)
+  }
+  const handleEditInfoCancel = () => {
+    setEditVisible(false)
 
   }
   return (
@@ -270,6 +288,7 @@ const CategoryList: FC = (props) => {
       >
         是否删除所有信息，删除后无法恢复
       </Modal>
+      <EditInfo categoryList={infoHeaderData.category} editData={editData} editVisible={editVisible} handleEditInfoOK={handleEditInfoOK} handleEditInfoCancel={handleEditInfoCancel} />
     </div>
   )
 }
