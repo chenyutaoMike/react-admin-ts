@@ -9,6 +9,7 @@ import Console from '../console/Console'
 import InfoIndex from '../info/CategoryList.tsx'
 import Category from '../info/Category.tsx'
 import User from '../user/User.tsx'
+import EditDetail from '../info/EditDetail.tsx'
 import logo from '../../assets/images/logo.png'
 import headerImg from '../../assets/images/header_icon.jpg'
 import classnames from 'classnames'
@@ -150,7 +151,7 @@ const Admin = (props) => {
               <Route component={InfoIndex} path="/infoIndex" />
               <Route component={Category} path="/category" />
               <Route component={User} path="/userIndex" />
-
+              <Route component={EditDetail} path="/infoEditDeatil" />
 
             </Switch>
           </Content>

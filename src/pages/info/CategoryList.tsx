@@ -1,10 +1,13 @@
 import React, { FC, useState, useEffect } from 'react'
 import InfoHeader from '../../components/infoHeader/InfoHeader'
-import { GetCategory, GetList, DeleteInfo } from '../../api/info'
+import { GetCategory, GetList, DeleteInfo, EditInfo } from '../../api/info'
 import { Row, Col, Table, Button, Space, Pagination, Popconfirm, message, Modal } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/es/table'
-import EditInfo from './dialog/EditInfo'
+import { formateDate } from '../../utils/formateDate'
+import { useHistory } from 'react-router-dom'
+import { saveEditDetailData } from '../../utils/editSave'
+import EditInfoComp from './dialog/EditInfo'
 
 export interface categoryItem {
   id: string;
@@ -44,6 +47,7 @@ export interface tableProps {
   status?: null | []
 }
 const CategoryList: FC = (props) => {
+  let history = useHistory();
   const columns: ColumnsType<tableProps> = [
     {
       title: '标题',
@@ -65,9 +69,12 @@ const CategoryList: FC = (props) => {
     {
       title: '日期',
       key: 'createDate',
-      width: 100,
+      width: 200,
       dataIndex: 'createDate',
-      align: 'center'
+      align: 'center',
+      render: (date) => {
+        return formateDate(date)
+      }
     },
     {
       title: '管理员',
@@ -86,7 +93,7 @@ const CategoryList: FC = (props) => {
         return (
           <Space>
             <Button type="primary" key={index} size="small" style={{ fontSize: 13 }} onClick={() => { editInfo(record) }}>编辑</Button>
-            <Button type="primary" key={index} size="small" style={{ fontSize: 13 }}>编辑详情</Button>
+            <Button type="primary" key={index} size="small" style={{ fontSize: 13 }} onClick={() => { toDetail(record) }}>编辑详情</Button>
             <Popconfirm title="确定删除此数据吗" icon={<QuestionCircleOutlined style={{ color: 'red' }} />} onConfirm={() => deleteInfo(id)}>
               <Button type="primary" danger key={index} size="small" style={{ fontSize: 13 }} >删除</Button>
             </Popconfirm>
@@ -242,16 +249,40 @@ const CategoryList: FC = (props) => {
   // 点击了编辑按钮
   const editInfo = (data: tableProps) => {
     setEditData(data)
-    console.log(data)
     // 打开弹窗
     setEditVisible(true)
   }
-  const handleEditInfoOK = (editValue:any) => {
-    console.log(editValue)
+  // 确定编辑
+  const handleEditInfoOK = (editValue: any) => {
+    EditInfo(editValue).then(res => {
+      // 关闭弹窗
+      setEditVisible(false)
+      // 修改成功
+      if (res.data.resCode === 0) {
+        message.success(res.data.message)
+        // 重新获取数据
+        getListData()
+      }
+
+    }).catch(err => {
+      message.error('修改失败')
+    })
   }
+  // 取消编辑
   const handleEditInfoCancel = () => {
     setEditVisible(false)
-
+  }
+  // 跳转详细页面
+  const toDetail = (detail: tableProps) => {
+    // '/infoEditDeatil'
+    // {pathname:"/query",query: { name : 'sunny' }}
+    // 保存数据
+    saveEditDetailData(detail)
+    // 跳转页面
+    history.push({
+      pathname: '/infoEditDeatil',
+      state: detail
+    })
   }
   return (
     <div>
@@ -288,7 +319,7 @@ const CategoryList: FC = (props) => {
       >
         是否删除所有信息，删除后无法恢复
       </Modal>
-      <EditInfo categoryList={infoHeaderData.category} editData={editData} editVisible={editVisible} handleEditInfoOK={handleEditInfoOK} handleEditInfoCancel={handleEditInfoCancel} />
+      <EditInfoComp categoryList={infoHeaderData.category} editData={editData} editVisible={editVisible} handleEditInfoOK={handleEditInfoOK} handleEditInfoCancel={handleEditInfoCancel} />
     </div>
   )
 }

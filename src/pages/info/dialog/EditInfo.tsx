@@ -1,21 +1,23 @@
 import React, { FC, HTMLAttributes, useEffect, useState } from 'react'
-import { Modal, Form, Select, Input, Button, } from 'antd'
+import { Modal, Form, Select, Input, Button, message } from 'antd'
 import { tableProps, categoryItem } from '../CategoryList'
 
 interface editInfoProps extends HTMLAttributes<HTMLElement> {
   editVisible: boolean;
   editData: tableProps;
-  handleEditInfoOK: (dataValue:any) => void;
+  handleEditInfoOK: (dataValue: any) => void;
   handleEditInfoCancel: () => void;
   categoryList?: Array<categoryItem>
 }
 const EditInfo: FC<editInfoProps> = (props) => {
+  const [form] = Form.useForm();
   const { editVisible, handleEditInfoOK, handleEditInfoCancel, categoryList, editData } = props;
   const [editValue, setEditValue] = useState({
     categoryId: editData.categoryId || '',
     title: editData.title || '',
     content: editData.content || ''
   })
+
   // 选择分类
   const seleteCategoryId = (value: any) => {
     setEditValue({
@@ -45,13 +47,35 @@ const EditInfo: FC<editInfoProps> = (props) => {
       title: editData.title || '',
       content: editData.content || ''
     })
+    form.setFieldsValue({
+      categoryId: editData.categoryId || '',
+      title: editData.title || '',
+      content: editData.content || ''
+    })
   }, [editData])
+  const submitForm = (formData: any) => {
+    if (formData.title === '') {
+      message.warning('请填写标题')
+      return
+    }
+    if (formData.categoryId === '') {
+      message.warning('请选择分类')
+      return
+    }
+    if (formData.content === '') {
+      message.warning('请填写内容')
+      return
+    }
+
+    handleEditInfoOK(formData)
+  }
   return (
     <div>
       <Modal
         title="修改详情"
         visible={props.editVisible}
-        onOk={()=>{handleEditInfoOK({...editData,...editValue})}}
+        onOk={() => { submitForm({ ...editData, ...editValue }) }}
+        // onOk={()=>{submitForm()}}
         onCancel={handleEditInfoCancel}
         cancelText="取消"
         // centered
@@ -62,9 +86,10 @@ const EditInfo: FC<editInfoProps> = (props) => {
           labelCol={{ span: 4 }}
           wrapperCol={{ span: 14 }}
           layout="horizontal"
-
+          name="editOrAdd"
+          form={form}
         >
-          <Form.Item label="类型" >
+          <Form.Item label="类型" rules={[{ required: true, message: '必须选择分类' }]} name="categoryId">
             <Select style={{ width: 120 }} value={editValue.categoryId && editValue.categoryId} onSelect={seleteCategoryId}>
               {
                 categoryList && categoryList.map((item: categoryItem) => {
@@ -73,10 +98,10 @@ const EditInfo: FC<editInfoProps> = (props) => {
               }
             </Select>
           </Form.Item>
-          <Form.Item label="标题">
+          <Form.Item name="title" label="标题" rules={[{ required: true, message: '必须填写标题' }]}>
             <Input style={{ minWidth: 300 }} value={editValue.title && editValue.title} onChange={editTitle} />
           </Form.Item>
-          <Form.Item label="概况">
+          <Form.Item label="概况" rules={[{ required: true, message: '必须填写内容' }]} name="content" >
             <Input.TextArea style={{ minWidth: 300, minHeight: 80 }} value={editValue.content && editValue.content} onChange={editContent} />
           </Form.Item>
         </Form>
