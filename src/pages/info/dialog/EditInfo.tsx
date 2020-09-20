@@ -7,11 +7,13 @@ interface editInfoProps extends HTMLAttributes<HTMLElement> {
   editData: tableProps;
   handleEditInfoOK: (dataValue: any) => void;
   handleEditInfoCancel: () => void;
-  categoryList?: Array<categoryItem>
+  categoryList?: Array<categoryItem>;
+  type?: string;
+  handleAddInfo: (data:any) => void
 }
 const EditInfo: FC<editInfoProps> = (props) => {
   const [form] = Form.useForm();
-  const { editVisible, handleEditInfoOK, handleEditInfoCancel, categoryList, editData } = props;
+  const { editVisible, handleEditInfoOK, handleEditInfoCancel, categoryList, editData ,handleAddInfo} = props;
   const [editValue, setEditValue] = useState({
     categoryId: editData.categoryId || '',
     title: editData.title || '',
@@ -66,12 +68,19 @@ const EditInfo: FC<editInfoProps> = (props) => {
       message.warning('请填写内容')
       return
     }
-
-    handleEditInfoOK(formData)
+    if (props.type === 'edit') {
+      // 编辑
+      handleEditInfoOK(formData)
+    }
+    if (props.type === 'add') {
+      // 新增
+      handleAddInfo(formData)
+    }
   }
   return (
     <div>
       <Modal
+        getContainer={false}
         title="修改详情"
         visible={props.editVisible}
         onOk={() => { submitForm({ ...editData, ...editValue }) }}

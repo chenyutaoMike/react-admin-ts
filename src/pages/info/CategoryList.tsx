@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect } from 'react'
 import InfoHeader from '../../components/infoHeader/InfoHeader'
-import { GetCategory, GetList, DeleteInfo, EditInfo } from '../../api/info'
+import { GetCategory, GetList, DeleteInfo, EditInfo, AddInfo } from '../../api/info'
 import { Row, Col, Table, Button, Space, Pagination, Popconfirm, message, Modal } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/es/table'
@@ -125,6 +125,8 @@ const CategoryList: FC = (props) => {
   const [editVisible, setEditVisible] = useState(false)
   // 要编辑的数据
   const [editData, setEditData] = useState({})
+  // 判断是编辑还是添加
+  const [editOrAdd, setEditOrAdd] = useState('edit')
   // 表格数据
   const [tableData, setTableData] = useState([])
   const [infoHeaderData, setInfoHeaderData] = useState({
@@ -251,6 +253,8 @@ const CategoryList: FC = (props) => {
     setEditData(data)
     // 打开弹窗
     setEditVisible(true)
+    //修改type
+    setEditOrAdd('edit')
   }
   // 确定编辑
   const handleEditInfoOK = (editValue: any) => {
@@ -284,9 +288,47 @@ const CategoryList: FC = (props) => {
       state: detail
     })
   }
+  // 添加分类
+  const addInfo = () => {
+    //清除上次编辑的数据
+    setEditData({})
+    // 打开窗口
+    setEditVisible(true)
+    // 修改type
+    setEditOrAdd('add')
+  }
+  const handleAddInfo = (addInfo: any) => {
+    let requestData = {
+      categoryId: Number(addInfo.categoryId),
+      title: addInfo.title,
+      imgUrl: null,
+      createDate: new Date().getTime(),
+      status: '2',
+      content: addInfo.content
+    }
+    addInfoApi(requestData)
+  }
+  const addInfoApi = (requestData: any) => {
+    AddInfo(requestData).then(res => {
+      let result = res.data;
+      if (result.resCode === 0) {
+        // 获取新列表
+        getListData()
+        // 清空表单
+        setEditData({})
+        // 关闭弹窗
+        setEditVisible(false)
+        message.success(result.message)
+      }
+
+    })
+  }
+  const searchList = (searchProps: any) => {
+    setPageConfig({ ...pageConfig, ...searchProps })
+  }
   return (
     <div>
-      <InfoHeader infoHeaderProps={infoHeaderData} />
+      <InfoHeader infoHeaderProps={infoHeaderData} addInfo={addInfo} search={searchList} />
       <Row>
         <Col span={24} style={{ marginTop: 30 }}>
           <Table
@@ -319,7 +361,15 @@ const CategoryList: FC = (props) => {
       >
         是否删除所有信息，删除后无法恢复
       </Modal>
-      <EditInfoComp categoryList={infoHeaderData.category} editData={editData} editVisible={editVisible} handleEditInfoOK={handleEditInfoOK} handleEditInfoCancel={handleEditInfoCancel} />
+      <EditInfoComp
+        type={editOrAdd}
+        categoryList={infoHeaderData.category}
+        editData={editData}
+        editVisible={editVisible}
+        handleEditInfoOK={handleEditInfoOK}
+        handleEditInfoCancel={handleEditInfoCancel}
+        handleAddInfo={handleAddInfo}
+      />
     </div>
   )
 }
