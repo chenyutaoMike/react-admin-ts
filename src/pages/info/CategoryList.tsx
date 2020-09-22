@@ -350,7 +350,7 @@ const CategoryList: FC = (props) => {
           <Button onClick={deleteInfoAll}>批量删除</Button>
         </Col>
         <Col>
-          <Pagination showQuickJumper defaultPageSize={10} current={currentPage} total={total} onChange={pageChange} />
+          <Pagination showQuickJumper defaultPageSize={5} current={currentPage} total={total} onChange={pageChange} />
         </Col>
       </Row>
       <Modal
