@@ -99,3 +99,14 @@ export function GetPermButton(data) {
     data: data
   })
 }
+
+/**
+ * 按钮权限
+ */
+export function GetCityPicker(data) {
+  return service.request({
+    method: 'post',
+    url: '/cityPicker/',
+    data: data
+  })
+}

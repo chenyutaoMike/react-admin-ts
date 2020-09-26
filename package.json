@@ -19,6 +19,7 @@
     "@types/react-router-dom": "^5.1.5",
     "antd": "^4.6.1",
     "axios": "^0.20.0",
+    "bizcharts": "^4.0.14",
     "braft-editor": "^2.3.9",
     "classnames": "^2.2.6",
     "cookies-js": "^1.2.3",

@@ -2,7 +2,8 @@ import React, { FC, useState, useEffect } from 'react'
 import { Row, Col, Select, Button, Input, Table, Pagination, Switch, Space, message, Popconfirm, Modal } from 'antd'
 import { ColumnsType } from 'antd/es/table'
 import { QuestionCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
-import { GetUserList, UserDelete } from '../../api/user'
+import { GetUserList, UserDelete, UserActives, AddUser } from '../../api/user'
+import Add from './dialog/add'
 interface tableProps {
   id: string;
   phone: string;
@@ -16,6 +17,7 @@ interface tableProps {
 const { confirm } = Modal;
 
 const { Option } = Select;
+
 const User: FC = () => {
   const [pageConfig, setPageConfig] = useState({
     pageNumber: 1,
@@ -29,6 +31,9 @@ const User: FC = () => {
   const [currentPage, setCurrentPage] = useState(1)
   // 删除数组
   const [deleteTable, setDeteleTable] = useState([])
+  // 添加/编辑弹出框
+  const [visible, setVisible] = useState(false);
+  const [editValue, setEditvalue] = useState({})
   const columns: ColumnsType<tableProps> = [
     {
       title: '邮箱/用户名',
@@ -65,9 +70,10 @@ const User: FC = () => {
       dataIndex: 'status',
       key: 'status',
       align: 'center',
-      render: (status) => {
+      render: (status, detail) => {
+
         return (
-          <Switch defaultChecked checked={status === '1' ? true : false} onChange={onChangeSwitch} />
+          <Switch defaultChecked checked={status === '1' ? true : false} onChange={() => { onChangeSwitch(status, detail.id) }} />
         )
       }
     },
@@ -76,20 +82,35 @@ const User: FC = () => {
       dataIndex: 'id',
       key: 'id',
       align: 'center',
-      render: (id) => {
+      render: (id, detail) => {
         return (
           <Space size={'small'}>
             <Popconfirm title="确定要删除吗？" okText="确定" cancelText="取消" onConfirm={() => { deleteInfo([id]) }} icon={<QuestionCircleOutlined style={{ color: 'red' }} />}>
               <Button type="primary" danger>删除</Button>
             </Popconfirm>
-            <Button type="primary">编辑</Button>
+            <Button type="primary" onClick={() => { openEdit(detail) }}>编辑</Button>
           </Space >
         )
       }
     }
   ]
-  const onChangeSwitch = () => {
-
+  // 打开编辑框
+  const openEdit = (detail: any) => {
+    setEditvalue(detail)
+    setVisible(true)
+  }
+  // 切换switch
+  const onChangeSwitch = (status: string, id: string) => {
+    const newStatus = status === '1' ? '2' : '1'
+    UserActives({
+      id: id,
+      status: newStatus
+    }).then(res => {
+      if (res.data.resCode === 0) {
+        message.success(res.data.message)
+        getUserList()
+      }
+    })
   }
   const handleChange = () => {
 
@@ -114,7 +135,7 @@ const User: FC = () => {
   const getUserList = () => {
     GetUserList(pageConfig).then((res: any) => {
       let result = res.data;
-      console.log(result)
+      // console.log(result)
       if (result.resCode === 0) {
         setTableData(result.data.data)
         setTotalPage(result.data.total)
@@ -123,7 +144,6 @@ const User: FC = () => {
   }
   // 删除
   const deleteInfo = (ids: string[]) => {
-    console.log(ids)
     // 删除在列表缓存中的数据
     setDeteleTable([])
     UserDelete({ id: ids }).then(res => {
@@ -155,6 +175,17 @@ const User: FC = () => {
       },
     });
   }
+  // 关闭编辑框
+  const closeAdd = () => {
+    setVisible(false)
+  }
+  // 开启编辑框
+  const openAdd = () => {
+    setEditvalue({})
+    setVisible(true)
+  }
+
+
   return (
     <div>
       <Row justify={'space-between'}>
@@ -163,8 +194,8 @@ const User: FC = () => {
             <Col span={6}>
               关键字：
           <Select defaultValue="lucy" style={{ width: 120 }} onChange={handleChange}>
-                <Option value="jack">Jack</Option>
-                <Option value="lucy">Lucy</Option>
+                <Option value="name">姓名</Option>
+                <Option value="phone">手机号</Option>
               </Select>
             </Col>
             <Col span={6} >
@@ -176,7 +207,7 @@ const User: FC = () => {
           </Row>
         </Col>
         <Col>
-          <Button type="primary">添加用户</Button>
+          <Button type="primary" onClick={openAdd}>添加用户</Button>
         </Col>
       </Row>
       <Table
@@ -193,7 +224,7 @@ const User: FC = () => {
         <Col><Button onClick={showDeleteConfirm}>批量删除</Button></Col>
         <Col> <Pagination showQuickJumper pageSize={pageConfig.pageSize} current={currentPage} total={totalPage} onChange={pageChange} /></Col>
       </Row>
-
+      <Add editVal={editValue} visible={visible} close={closeAdd} getList={getUserList} />
     </div>
   )
 }

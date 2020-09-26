@@ -8,10 +8,11 @@ import {
   Col,
   message
 } from 'antd';
-import { GetSms, login, register } from '../../api/login'
+import { GetSms,  login, register } from '../../api/login'
 import { extractCode } from '../../utils/validate'
 import { setToken, setUserName, getToken, getUserName } from '../../utils/app'
 import { RouteComponentProps, Redirect } from 'react-router-dom'
+
 import sha1 from 'js-sha1'
 import classnames from 'classnames'
 
@@ -45,7 +46,7 @@ const Login: FC<RouteComponentProps> = (props) => {
   //form表单控制
   const [form] = Form.useForm();
   // 验证码Input控制
-
+  const [role, setTempRole] = useState([])
   // 切换按钮
   const changeMenuItem = (index: number) => {
     if (index === 0) {
@@ -114,14 +115,16 @@ const Login: FC<RouteComponentProps> = (props) => {
         if (result.resCode === 0) {
           // 提示登陆成功
           message.success('登陆成功')
+          
           // 设置token
           setToken(result.data.token)
           // 设置username
           setUserName(result.data.username)
+       
           // 清空表单
           form.resetFields()
           // 跳转页面
-          props.history.replace("/")
+          props.history.replace('/')
         }
       }).catch(err => {
         message.error('登陆失败，网络错误')
@@ -142,9 +145,10 @@ const Login: FC<RouteComponentProps> = (props) => {
         message.error('注册失败，网络错误')
       })
     }
-
-
   }
+  
+
+
   /**
    * 倒数定时器
    */

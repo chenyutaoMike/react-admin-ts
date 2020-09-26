@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { getToken, getUserName, removeToken, removeUserName } from '../../utils/app'
 import { Layout, Menu, Modal, message } from 'antd'
 import * as Icons from '@ant-design/icons';
@@ -14,6 +14,8 @@ import logo from '../../assets/images/logo.png'
 import headerImg from '../../assets/images/header_icon.jpg'
 import classnames from 'classnames'
 import { getPath, setPath, getMenu, setMenu } from '../../utils/BrowserPath'
+import { GetUserRole } from '../../api/login'
+import { getRole, removeRole, setRole } from '../../utils/role'
 const { Header, Sider, Content } = Layout;
 const { SubMenu } = Menu;
 
@@ -32,27 +34,47 @@ const Admin = (props) => {
   // 默认路径
   const [urlPath, setUrlPath] = useState(JSON.parse(JSON.stringify(getPath())) || '/consoleIndex')
   const [urlMenu, setUrlMenu] = useState(JSON.parse(JSON.stringify(getMenu())) || '/consoleIndex')
-
+  // 权限控制
+  const [role, setTempRole] = useState(getRole())
   let history = useHistory();
   const toggle = () => {
     setCollapsed(!collapsed)
   }
+  useEffect(() => {
+    /**
+    * 
+    * 获取用户权限
+    */
+
+    GetUserRole().then(res => {
+      if (res.data.resCode === 0) {
+        setRole(res.data.data)
+        setTempRole(res.data.data.role)
+      }
+    })
+
+  }, []);
   // 点击了确定
   const handleOk = () => {
+    //  关闭模态框
+    setVisible(true)
     // 清除登录信息
     removeToken()
     removeUserName()
+    //清除数据
+    removeRole()
     // 路由跳转
     history.replace('/login')
     message.success('退出成功')
-    //  关闭模态框
-    setVisible(true)
+
+
   }
   // 点击了取消
   const handleCancel = () => {
     setVisible(false)
   }
   const MenuList = (router) => {
+    console.log(getRole());
     return router.map((item) => {
       if (!item.children) {
         // 子菜单
@@ -64,19 +86,27 @@ const Admin = (props) => {
       } else {
         // 一级菜单
         // icon={`<${item.icon} />`}
-        return (<SubMenu key={item.path} title={item.title} icon={
-          item.icon ? React.createElement(Icons[item.icon], {
-            fontSize: '26px'
-          })
-            : null
-        }>
-          {MenuList(item.children)}
-        </SubMenu>)
+
+        if ((role instanceof Array)) {
+
+          if (role.includes(item.hidden) || (item.hidden === 'admin') || role.includes('admin')) {
+            return (<SubMenu key={item.path} title={item.title} icon={
+              item.icon ? React.createElement(Icons[item.icon], {
+                fontSize: '26px'
+              })
+                : null
+            }>
+              {MenuList(item.children)}
+            </SubMenu>)
+          }
+        }
       }
     })
+
   }
   // 退出登录
   const logout = () => {
+
     setVisible(true)
   }
   const setKeyPath = ({ item, key, keyPath, domEvent }) => {
